@@ -11,13 +11,14 @@ create type category_type as enum ('подкасты', 'творчество',
 
 CREATE TABLE donators
 (
-    id INTEGER NOT NULL PRIMARY KEY,
+    id          BIGSERIAL NOT NULL PRIMARY KEY,
     first_name  TEXT,
     second_name TEXT,
     login       TEXT,
     password    TEXT,
     account     NUMERIC,
     sex         TEXT check (sex in ('F', 'M')),
+    age         DATE,
     CHECK (id > 0),
     CHECK (account >= 0)
 );
@@ -26,7 +27,7 @@ CREATE TABLE donators
 
 CREATE TABLE creators
 (
-    id BIGSERIAL NOT NULL PRIMARY KEY,
+    id          BIGSERIAL NOT NULL PRIMARY KEY,
     first_name  TEXT,
     second_name TEXT,
     email       CITEXT,
@@ -39,7 +40,7 @@ CREATE TABLE creators
 
 CREATE TABLE content
 (
-    id    BIGSERIAL NOT NULL PRIMARY KEY,
+    id            BIGSERIAL NOT NULL PRIMARY KEY,
     description   TEXT,
     category_name category_type,
     CHECK (id > 0)
@@ -48,7 +49,7 @@ CREATE TABLE content
 
 CREATE TABLE awards
 (
-    id   BIGSERIAL NOT NULL PRIMARY KEY,
+    id          BIGSERIAL NOT NULL PRIMARY KEY,
     price       NUMERIC,
     title       TEXT,
     description TEXT,
@@ -62,24 +63,26 @@ CREATE TABLE awards
 
 CREATE TABLE posts
 (
-    id   BIGSERIAL NOT NULL PRIMARY KEY,
-    title      TEXT,
-    body       TEXT,
-    date       timestamptz,
-    content_id INTEGER   NOT NULL REFERENCES content (id) ON DELETE CASCADE,
-    awards_id  INTEGER   NOT NULL REFERENCES awards (id) ON DELETE CASCADE,
-    CHECK (id > 0)
+    id              BIGSERIAL NOT NULL PRIMARY KEY,
+    title           TEXT,
+    body            TEXT,
+    date            timestamptz,
+    age_restriction INTEGER,
+    content_id      INTEGER   NOT NULL REFERENCES content (id) ON DELETE CASCADE,
+    awards_id       INTEGER   NOT NULL REFERENCES awards (id) ON DELETE CASCADE,
+    CHECK (id > 0),
+    CHECK (age_restriction >= 0)
 );
 
 \COPY posts FROM './data/posts.csv' DELIMITER ',' CSV HEADER;
 
 CREATE TABLE payments
 (
-    id BIGSERIAL NOT NULL PRIMARY KEY,
+    id          BIGSERIAL NOT NULL PRIMARY KEY,
     amount      NUMERIC,
     date        timestamptz,
-    donators_id INTEGER NOT NULL references donators (id) ON DELETE CASCADE,
-    content_id  INTEGER NOT NULL references content (id) ON DELETE CASCADE,
+    donators_id INTEGER   NOT NULL references donators (id) ON DELETE CASCADE,
+    content_id  INTEGER   NOT NULL references content (id) ON DELETE CASCADE,
     CHECK (id > 0),
     CHECK (amount >= 0)
 );
@@ -87,9 +90,9 @@ CREATE TABLE payments
 
 CREATE TABLE donators_content
 (
-    id BIGSERIAL NOT NULL PRIMARY KEY,
-    donators_id         INTEGER   NOT NULL REFERENCES donators (id) ON DELETE CASCADE,
-    content_id          INTEGER   NOT NULL REFERENCES content (id) ON DELETE CASCADE
+    id          BIGSERIAL NOT NULL PRIMARY KEY,
+    donators_id INTEGER   NOT NULL REFERENCES donators (id) ON DELETE CASCADE,
+    content_id  INTEGER   NOT NULL REFERENCES content (id) ON DELETE CASCADE
 );
 \COPY donators_content FROM './data/donators_content.csv' DELIMITER ',' CSV HEADER;
 

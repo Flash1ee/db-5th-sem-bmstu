@@ -14,6 +14,7 @@ category_names = ['подкасты', 'творчество',
                   'блог', 'еда', 'путешествия',
                   'разработка игр', 'музыка', "дизайн", 'разработка']
 AWARDS_PRICE = [0, 100, 500, 1000, 3000, 5000]
+POSTS_AGE = [0, 6, 12, 14, 16, 18, 21]
 
 
 def generate_donators(count):
@@ -21,7 +22,9 @@ def generate_donators(count):
     for i in range(count):
         user = faker.simple_profile()
         fio = user['name'].split()
-        donator = [i+1, fio[1], fio[0], user['username'], faker.password(), str(faker.random_int(0, 5000)), user['sex']]
+        age = faker.date()
+        donator = [i + 1, fio[1], fio[0], user['username'], faker.password(),
+                   str(faker.random_int(0, 5000)), user['sex'], age]
         donators.append(donator)
     return donators
 
@@ -31,7 +34,7 @@ def generate_creators(count):
     for i in range(count):
         user = faker.simple_profile()
         fio = user['name'].split()
-        creator = [i+1, fio[1], fio[0], user['mail'], user['username'], faker.password(),
+        creator = [i + 1, fio[1], fio[0], user['mail'], user['username'], faker.password(),
                    user['sex']]
         creators.append(creator)
     return creators
@@ -42,7 +45,7 @@ def generate_content(count):
     for i in range(count):
         category = faker.word(category_names)
         description = faker.paragraph()
-        content.append([i+1, description, category])
+        content.append([i + 1, description, category])
     return content
 
 
@@ -55,7 +58,8 @@ def generate_posts(count, count_contents, count_awards):
         title = faker.sentence()
         body = faker.paragraph()
         date = faker.date_time()
-        posts.append([i+1, title, body, date, content_id, awards_id])
+        age = POSTS_AGE[faker.random_int() % len(POSTS_AGE)]
+        posts.append([i + 1, title, body, date, age, content_id, awards_id])
     return posts
 
 
@@ -66,7 +70,7 @@ def generate_payments(count, count_content, count_donators):
         date = faker.date_time()
         donators_id = faker.random_int(1, count_donators)
         content_id = faker.random_int(1, count_content)
-        payments.append([i+1, amount, date, donators_id, content_id])
+        payments.append([i + 1, amount, date, donators_id, content_id])
     return payments
 
 
@@ -77,7 +81,7 @@ def generate_awards(count):
         title = faker.sentence()
         description = faker.paragraph()
         count = faker.random_int(1, 100)
-        awards.append([i+1, price, title, description, count])
+        awards.append([i + 1, price, title, description, count])
     return awards
 
 
@@ -86,7 +90,7 @@ def donators_content(count, count_donators, count_content):
     for i in range(count):
         donator_id = faker.random_int(1, count_donators)
         content_id = faker.random_int(1, count_content)
-        donators_content.append([i+1, donator_id, content_id])
+        donators_content.append([i + 1, donator_id, content_id])
     return donators_content
 
 
@@ -107,7 +111,7 @@ def main():
         donators_writer = csv.writer(donators_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         donators = generate_donators(COUNT)
 
-        donators_writer.writerow(["id", "first_name", "second_name", "login", "password", "account", "sex"])
+        donators_writer.writerow(["id", "first_name", "second_name", "login", "password", "account", "sex", "age"])
 
         count['donators'] = len(donators)
 
@@ -127,7 +131,6 @@ def main():
         content = generate_content(COUNT)
         content_writer.writerow(["id", "description", "category_name"])
 
-
         count['content'] = len(content)
 
         for i in range(len(content)):
@@ -139,7 +142,6 @@ def main():
 
         awards_writer.writerow(["id", "price", "title", "description", "count"])
 
-
         count['awards'] = len(awards)
         for i in range(len(awards)):
             awards_writer.writerow(awards[i])
@@ -148,8 +150,7 @@ def main():
         posts_writer = csv.writer(posts_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         posts = generate_posts(COUNT, count['content'], count['awards'])
 
-        posts_writer.writerow(["id", "title", "body", "date", "content_id", "awards_id"])
-
+        posts_writer.writerow(["id", "title", "body", "date", "age_restriction", "content_id", "awards_id"])
 
         count['posts'] = len(posts)
 
@@ -160,7 +161,6 @@ def main():
         payments_writer = csv.writer(payments_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         payments = generate_payments(COUNT, count['content'], count['donators'])
         payments_writer.writerow(["id", "amount", "date", "donators_id", "content_id"])
-
 
         for i in range(len(payments)):
             payments_writer.writerow(payments[i])
