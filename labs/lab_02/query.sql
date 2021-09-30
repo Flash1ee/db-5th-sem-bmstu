@@ -54,7 +54,7 @@ from payments as p
 where p.amount = ANY (
     select price
     from awards
-)
+);
 
 -- 7. Инструкция SELECT, использующая агрегатные функции в выражениях
 -- столбцов.
@@ -119,11 +119,7 @@ commit;
 --
 -- 12. Инструкция SELECT, использующая вложенные коррелированные
 -- подзапросы в качестве производных таблиц в предложении FROM.
-select first_name, second_name
-from creators cr
-         join (
-    select first_name as first_name_donator
-)
+
 -- 13. Инструкция SELECT, использующая вложенные подзапросы с уровнем
 -- вложенности 3.
 --
@@ -161,11 +157,23 @@ values ('Пост о жизни', 'жизненные истории', current_d
         (select max(id) from content),
         (select min(id) from awards),
         6);
+
 -- 18. Простая инструкция UPDATE.
+update awards
+set price = 250
+where price = 100;
 -- 19. Инструкция UPDATE со скалярным подзапросом в предложении SET.
---
+-- Начислить бонус на аккаунт всем донатером в размере минимального платежа
+-- среди всех донатеров.
+update donators
+set account = account + (
+    select MIN(p.amount)
+    from payments as p
+);
 -- 20. Простая инструкция DELETE.
---
+-- Удалить все посты с ограничением больше 21
+delete from posts
+where posts.age_restriction > 21;
 -- 21. Инструкция DELETE с вложенным коррелированным подзапросом в
 -- предложении WHERE.
 --
