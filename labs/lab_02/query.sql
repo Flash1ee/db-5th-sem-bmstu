@@ -119,10 +119,38 @@ commit;
 --
 -- 12. Инструкция SELECT, использующая вложенные коррелированные
 -- подзапросы в качестве производных таблиц в предложении FROM.
+-- Вывести информацию о контенте с привязкой к его наградам, стоимостью более 500.
+-- lateral позволяет из подзапроса обратиться к столбцам внешней таблицы
+select cont.category_name, cont.description, price, title
+from awards as a
+         join lateral (
+    select awards_id, category_name, description
+    from content
+             join posts p on content.id = p.content_id
+    where a.price > 500
+    ) as cont on a.id = cont.awards_id;
 
 -- 13. Инструкция SELECT, использующая вложенные подзапросы с уровнем
 -- вложенности 3.
---
+-- Логины пользователей, у которых есть платежи за контент, посты которого
+-- входят в 10ку самых первых
+select login, payments.date
+from donators
+         join (
+    select donators_id, amount, date
+    from payments
+             join (
+        select id, category_name
+        from content
+        where id in (
+            select content_id
+            from posts
+            order by date
+            limit 10
+        )
+    ) content on content.id = payments.content_id
+) payments on payments.donators_id = donators.id
+order by payments.date;
 -- 14. Инструкция SELECT, консолидирующая данные с помощью предложения
 -- GROUP BY, но без предложения HAVING.
 -- Вывести количество постов по категориям
@@ -172,17 +200,86 @@ set account = account + (
 );
 -- 20. Простая инструкция DELETE.
 -- Удалить все посты с ограничением больше 21
-delete from posts
+delete
+from posts
 where posts.age_restriction > 21;
 -- 21. Инструкция DELETE с вложенным коррелированным подзапросом в
 -- предложении WHERE.
---
+-- Удалить посты, у контента которых не было платежей
+begin;
+delete
+from posts as p
+where not exists(
+        select *, c.id, p2.id
+        from payments
+                 join content c on c.id = payments.content_id
+                 join posts p2 on c.id = p2.content_id
+        where p2.id = p.id
+    );
+rollback;
 -- 22. Инструкция SELECT, использующая простое обобщенное табличное
 -- выражение
---
+-- Вывести имя, фамилию креатеров и их донатеров и сумму пожертвований
+with d_c_sum as (
+    select donators_id, content_id, sum(amount) as donats
+    from payments as p
+    group by donators_id, content_id
+)
+select d.first_name, d.second_name, c.first_name, c.second_name, d_c_sum.donats
+from donators as d
+         join donators_content dc on d.id = dc.donators_id
+         join creators c on dc.content_id = c.id
+         join d_c_sum on d_c_sum.donators_id = d.id and d_c_sum.content_id = c.id;
 -- 23. Инструкция SELECT, использующая рекурсивное обобщенное табличное
--- выражение.
---
+-- ввыражение.
+drop type if exists rank_type cascade;
+drop table if exists ranks cascade;
+
+create type rank_type as enum
+    ('Селерон', 'Атлончик','Ашечка', 'Рязань','Пентиум', 'Третий корик', 'Пятерочка', 'Седьмое ядрище');
+create temp table ranks
+(
+    id   int not null primary key,
+    parent_id int,
+    name rank_type
+);
+insert into ranks(id, parent_id, name)
+values (1, 0, 'Рязань'),
+       (2, 0, 'Седьмое ядрище'),
+       (3, 1, 'Ашечка'),
+       (4, 2, 'Пятерочка'),
+       (5, 3, 'Атлончик'),
+       (6, 4, 'Третий корик'),
+       (7, 6, 'Пентиум'),
+       (8, 7, 'Селерон');
+-- select * from ranks;
+with recursive cte(id, parent_id, level, name) as (
+    select id, parent_id, 0, name from ranks
+    where parent_id = 0
+    union all
+    select r.id, r.parent_id, level + 1, r.name
+    from ranks r
+    join cte on r.parent_id = cte.id
+)
+select * from cte;
 -- 24. Оконные функции. Использование конструкций MIN/MAX/AVG OVER()
---
+-- Подсчитать сумму платежей донатеров
+select distinct d.login, sum(p.amount) over (partition by p.donators_id) as sum_donats
+from donators as d
+         join payments p on d.id = p.donators_id
+order by sum_donats;
+
 -- 25. Оконные фнкции для устранения дублей
+with cte(id, first_name, second_name) as (
+    select id, first_name, second_name
+    from donators
+    union all
+    select id, first_name, second_name
+    from donators
+)
+-- @todo почему нет доступа до n без оборачивания таблицы??
+select id, first_name, second_name
+from (
+         select id, first_name, second_name, row_number() over (partition by id) n
+         from cte) uniq
+where n = 1;
