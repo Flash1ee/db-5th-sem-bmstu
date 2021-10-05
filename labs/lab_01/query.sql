@@ -40,7 +40,7 @@ CREATE TABLE creators
 
 CREATE TABLE content
 (
-    id            BIGSERIAL NOT NULL PRIMARY KEY,
+    id            BIGSERIAL NOT NULL unique PRIMARY KEY references creators (id),
     description   TEXT,
     category_name category_type,
     CHECK (id > 0)
