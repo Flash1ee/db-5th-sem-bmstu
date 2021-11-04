@@ -283,3 +283,16 @@ from (
          select id, first_name, second_name, row_number() over (partition by id) n
          from cte) uniq
 where n = 1;
+
+-- список донатеров, которые заплатили больше 200 рублей за контент 18+ в разделе еда.
+
+select d.id, d.first_name, d.second_name, sum(p.amount) as sum_payments from donators d
+join payments p on d.id = p.donators_id
+join content c on p.content_id = c.id and c.category_name = 'еда'
+join posts p2 on c.id = p2.content_id and p2.age_restriction > 18
+group by d.id, d.first_name, d.second_name
+having sum(p.amount) > 200;
+
+select category_name from content
+group by category_name
+order by count(*) desc
