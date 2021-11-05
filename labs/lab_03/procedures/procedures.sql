@@ -21,7 +21,19 @@ ROLLBACK;
 
 -- Рекурсивную хранимую процедуру или хранимую процедур с
 -- рекурсивным ОТВ
+CREATE OR REPLACE PROCEDURE reverse_counter(count int) AS
+$$
+BEGIN
+    raise notice 'count = %', count;
+    if count <> 0 then
+        call reverse_counter(count - 1);
+    else
+        return;
+    end if;
+END;
+$$ language plpgsql;
 
+CALL reverse_counter(100);
 -- • Хранимую процедуру с курсором
 -- Вывести уровни подписки пользователя с id = donator_id, которые доступны ему по имеющимся
 -- донатам для креаторов с id = creator_id --

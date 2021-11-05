@@ -51,9 +51,11 @@ CREATE OR REPLACE FUNCTION get_posts_awards_limit_price(min int, max int)
                 awards_title text,
                 awards_price int
             )
-AS $$
+AS
+$$
 begin
-    create temp table tmp (
+    create temp table tmp
+    (
         id           int,
         title        text,
         awards_title text,
@@ -74,5 +76,51 @@ $$ language plpgsql;
 select *
 from get_posts_awards_limit_price(250, 1000);
 
-DROP FUNCTION get_posts_awards_limit_price(integer)
-drop table tmp;
+-- • Рекурсивную функцию или функцию с рекурсивным ОТВ
+-- Создаёт rank_type иерархию и возвращает её в виде таблицы
+create type rank_type as enum
+    ('Селерон', 'Атлончик','Ашечка', 'Рязань','Пентиум', 'Третий корик', 'Пятерочка', 'Седьмое ядрище');
+create or replace function get_rank_type_hierarhy()
+    RETURNS TABLE
+            (
+                id        int,
+                parent_id int,
+                level     int,
+                name      rank_type
+            )
+as
+$$
+BEGIN
+    return query (
+        with recursive cte(res_id, parent_id, res_level, name) as (
+            select r.id, r.parent_id, 0 as r_level, r.name
+            from ranks r
+            where r.parent_id = 0
+            union all
+            select r2.id, r2.parent_id, res_level + 1, r2.name
+            from ranks r2
+                     join cte on r2.parent_id = cte.res_id
+        )
+        select cte.res_id, cte.parent_id, cte.res_level, cte.name from cte);
+end;
+$$ language plpgsql;
+
+create temp table ranks
+(
+    id        int not null primary key,
+    parent_id int,
+    name      rank_type
+);
+insert into ranks(id, parent_id, name)
+values (1, 0, 'Рязань'),
+       (2, 0, 'Седьмое ядрище'),
+       (3, 1, 'Ашечка'),
+       (4, 2, 'Пятерочка'),
+       (5, 3, 'Атлончик'),
+       (6, 4, 'Третий корик'),
+       (7, 6, 'Пентиум'),
+       (8, 7, 'Селерон');
+
+select *
+from get_rank_type_hierarhy();
+DROP FUNCTION get_rank_type_hierarhy()
