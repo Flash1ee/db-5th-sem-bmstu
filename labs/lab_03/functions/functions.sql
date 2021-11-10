@@ -101,7 +101,8 @@ BEGIN
             from ranks r2
                      join cte on r2.parent_id = cte.res_id
         )
-        select cte.res_id, cte.parent_id, cte.res_level, cte.name from cte);
+        select cte.res_id, cte.parent_id, cte.res_level, cte.name
+        from cte);
 end;
 $$ language plpgsql;
 
@@ -124,3 +125,6 @@ values (1, 0, 'Рязань'),
 select *
 from get_rank_type_hierarhy();
 DROP FUNCTION get_rank_type_hierarhy()
+
+
+
