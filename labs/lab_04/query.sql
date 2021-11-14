@@ -67,7 +67,61 @@ $$ language plpython3u;
 
 select * from get_count_content();
 -- • Хранимую процедуру CLR,
+-- Скоро 8 марта, в честь праздника всем женщинам
+-- на счёт начислим bonus единиц--
+CREATE OR REPLACE PROCEDURE add_women_bonus(bonus int) as
+    $$
+    query = '''UPDATE donators
+    SET account = account + $1
+    WHERE sex = 'F';'''
+    bef = plpy.prepare(query, ['int'])
+    res = plpy.execute(bef, [bonus])
+    $$ language plpython3u;
+DROP PROCEDURE add_women_bonus(bonus int);
+BEGIN;
+CALL add_women_bonus(100);
+select * from donators where sex = 'F';
+ROLLBACK;
+
 -- • Триггер CLR,
+-- После платежа на сумму >= стоимости подписки, в таблице awards количество подписок с минимально
+-- подходящей ценой уменьшить на 1
+CREATE OR REPLACE FUNCTION fix_count_awards()
+RETURNS TRIGGER as
+    $$
+    payment_content_id = TD["new"]["content_id"]
+    payment_amount = TD["new"]["amount"]
+    awards_id_query = '''
+   select awards.id as aw_id from awards
+            join posts p on awards.id = p.awards_id
+            join content c on p.content_id = $1
+            where awards.price >= $2
+            order by awards.price asc
+            limit 1
+    '''
+    update_awards_query = '''UPDATE awards
+    SET count = count - 1
+    WHERE awards.id = $1'''
+
+    prep_awards_id = plpy.prepare(awards_id_query, ["int", "int"])
+    prep_update_awards = plpy.prepare(update_awards_query, ["int"])
+
+    res = plpy.execute(prep_awards_id, [payment_content_id, payment_content_id])
+    if res.nrows() != 0:
+        res = plpy.execute(prep_update_awards, [res[0]['aw_id']])
+        plpy.notice("SUCCESS UPD COUNT AWARDS")
+    else:
+        plpy.notice("SUCCESS NOT UPD COUNT AWARDS")
+
+    $$ language plpython3u;
+
+DROP TRIGGER tg_python_update_count_awards on payments;
+CREATE TRIGGER tg_python_update_count_awards
+AFTER INSERT ON payments
+FOR EACH ROW
+EXECUTE FUNCTION fix_count_awards();
+insert into payments(amount, donators_id, content_id)
+values(5000, 1, 2);
 -- • Определяемый пользователем тип данных CLR.
 
 CREATE TYPE greeting AS
