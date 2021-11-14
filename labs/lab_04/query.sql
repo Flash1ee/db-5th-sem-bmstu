@@ -123,17 +123,18 @@ EXECUTE FUNCTION fix_count_awards();
 insert into payments(amount, donators_id, content_id)
 values(5000, 1, 2);
 -- • Определяемый пользователем тип данных CLR.
-
 CREATE TYPE greeting AS
 (
-    how text,
-    who text
+    username text,
+    greeting_text text
 );
-CREATE FUNCTION greet(how text)
+CREATE OR REPLACE FUNCTION greet(how text)
     RETURNS SETOF greeting
 AS
 $$
-for who in ["World", "PostgreSQL", "PL/Python"]:
-    yield (how, who)
+for who in ["Привет из России", "Hello from England", "Aloha from Hawaii"]:
+    yield (who, how)
 $$ LANGUAGE plpython3u;
+
+select * from greet('Dmitry')
 
