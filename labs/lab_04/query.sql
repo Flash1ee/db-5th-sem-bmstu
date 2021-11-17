@@ -138,3 +138,12 @@ $$ LANGUAGE plpython3u;
 
 select * from greet('Dmitry')
 
+-- Процедура на удаление пользователя.
+CREATE OR REPLACE PROCEDURE delete_donator(id int) as
+$$
+    query = "DELETE FROM donators where id = $1;"
+    bef = plpy.prepare(query, ['int'])
+    res = plpy.execute(bef, [id])
+$$ language plpython3u;
+
+CALL delete_donator(2);
