@@ -139,3 +139,79 @@ where id < (
 select *
 from load_awards;
 
+-- Задание 4
+-- Выполнить следующие действия:
+-- 1. Извлечь XML/JSON фрагмент из XML/JSON документа
+-- 2. Извлечь значения конкретных узлов или атрибутов XML/JSON документа
+-- 3. Выполнить проверку существования узла или атрибута
+-- 4. Изменить XML/JSON документ
+-- 5. Разделить XML/JSON документ на несколько строк по узлам
+
+drop table tb_json;
+create table tb_json
+(
+    data jsonb
+);
+
+insert into tb_json(data)
+VALUES ('{
+  "id": "1",
+  "user": {
+    "firstname": "Dmitry",
+    "login": "flashie"
+  }
+}'),
+       ('{
+         "id": "2",
+         "user": {
+           "firstname": "Vasiliy",
+           "login": "vasya2003"
+         }
+       }'),
+       ('{
+         "id": "1",
+         "user": {
+           "firstname": "Alex",
+           "login": "alexlion"
+         }
+       }');
+
+-- 1. Извлечь XML/JSON фрагмент из XML/JSON документа
+select (data ->> 'user')
+from tb_json;
+
+-- 2. Извлечь значения конкретных узлов или атрибутов XML/JSON документа
+select (data #> '{"user", "login"}')::text as nickname
+from tb_json;
+
+select (data -> 'user' -> 'login')::text as nickname
+from tb_json;
+
+-- 3. Выполнить проверку существования узла или атрибута
+CREATE OR REPLACE FUNCTION json_key_exists(data jsonb, key text)
+    returns bool as
+$$
+BEGIN
+    return (data ? key);
+END
+$$ language plpgsql;
+select * from json_key_exists('{"user": "lama", "age": 99}', 'user');
+select * from json_key_exists('{"user": "lama", "age": 99}', 'password');
+
+-- 4. Изменить XML/JSON документ
+UPDATE tb_json SET data = '{"id": "3", "user": {"login": "a", "firstname": "b"}}'
+where (data->>'id')::int = 2;
+
+select * from tb_json;
+
+-- 5. Разделить XML/JSON документ на несколько строк по узлам
+-- Разделить JSON документ на несколько строк по узлам.
+
+with cte(data) as (
+    select jsonb_array_elements(data)
+    from temp
+)
+select * from cte;
+
+select * from json_array_elements('[{"user": "lama", "age": 120},
+  {"user": "lama", "age": 99}]');
