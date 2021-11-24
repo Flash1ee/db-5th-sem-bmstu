@@ -195,14 +195,30 @@ BEGIN
     return (data ? key);
 END
 $$ language plpgsql;
-select * from json_key_exists('{"user": "lama", "age": 99}', 'user');
-select * from json_key_exists('{"user": "lama", "age": 99}', 'password');
+select *
+from json_key_exists('{
+  "user": "lama",
+  "age": 99
+}', 'user');
+select *
+from json_key_exists('{
+  "user": "lama",
+  "age": 99
+}', 'password');
 
 -- 4. Изменить XML/JSON документ
-UPDATE tb_json SET data = '{"id": "3", "user": {"login": "a", "firstname": "b"}}'
-where (data->>'id')::int = 2;
+UPDATE tb_json
+SET data = '{
+  "id": "3",
+  "user": {
+    "login": "a",
+    "firstname": "b"
+  }
+}'
+where (data ->> 'id')::int = 2;
 
-select * from tb_json;
+select *
+from tb_json;
 
 -- 5. Разделить XML/JSON документ на несколько строк по узлам
 -- Разделить JSON документ на несколько строк по узлам.
@@ -211,7 +227,38 @@ with cte(data) as (
     select jsonb_array_elements(data)
     from temp
 )
-select * from cte;
+select *
+from cte;
 
-select * from json_array_elements('[{"user": "lama", "age": 120},
-  {"user": "lama", "age": 99}]');
+select *
+from json_array_elements('[
+  {
+    "user": "lama",
+    "age": 120
+  },
+  {
+    "user": "lama",
+    "age": 99
+  }
+]');
+
+
+-- select с between
+insert into tb_json
+values ('{
+  "id": "7",
+  "user": {
+    "login": "flashie",
+    "firstname": "kek"
+  }
+}'),
+       ('{
+         "id": "9",
+         "user": {
+           "login": "lol",
+           "firstname": "cheburek"
+         }
+       }');
+select * from tb_json
+where (data->>'id')::int between 2 and 9;
+select * from tb_json;
