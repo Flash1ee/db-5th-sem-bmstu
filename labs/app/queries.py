@@ -1,5 +1,6 @@
 import db_connection
 
+DELETE_DONATOR = "DELETE from donators where id = {}"
 # Выполнить скалярный запрос;
 GET_CONTENT_CATEGORIES = "SELECT distinct category_name from crowdfunding.public.content;"
 # Выполнить запрос с несколькими соединениями (JOIN);
@@ -32,7 +33,7 @@ CALL_FEMALE_BONUS_PROCEDURE = "CALL add_bonus({});"
 # Вызвать системную функцию или процедуру;
 GET_CURRENT_DATE = "select current_date;"
 # Создать таблицу в базе данных, соответствующую тематике БД;
-CREATE_NEW_TB = "create table if not exists events( \
+CREATE_NEW_TB = "create table events( \
                 id bigserial primary key, \
                 event_name text not null, \
                 creator_id int references creators(id) not null \
@@ -171,7 +172,7 @@ def create_table_events(connection):
     try:
         cursor = db_connection.execute_query(connection, CREATE_NEW_TB)
     except:
-        return "db_error"
+        return "already exists"
     else:
         data += "Success"
         return data
@@ -209,3 +210,24 @@ def insert_values(connection):
         data += "Success insert"
         return data
 
+def delete_donator(connection):
+    data = "Donator with id = {} was deleted\n"
+    donator_id = -1
+    try:
+        donator_id = int(input("Input donator_id: "))
+        if donator_id <= 0:
+            raise Exception
+    except:
+        print("invalid creator_id")
+        return
+    check_donator = "SELECT * from donators where id = {}".format(donator_id)
+    res = db_connection.execute_query(connection, check_donator)
+    if res.rowcount == 0:
+        return "not found donator with id = {}".format(donator_id)
+    try:
+        res = db_connection.execute_query(connection, DELETE_DONATOR.format(donator_id))
+    except:
+        return "db_error"
+    else:
+        data = data.format(donator_id)
+        return data

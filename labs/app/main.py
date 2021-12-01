@@ -19,6 +19,7 @@ workers = {
     9: queries.create_table_events,
     10: queries.insert_values,
     11: queries.delete_table_events,
+    12: queries.delete_donator,
 }
 
 
@@ -36,6 +37,7 @@ def menu():
     9 - Создать таблицу events.
     10 - Вставить значения в созданную таблицу.
     11 - Удалить созданную таблицу events.
+    12 - Удалить донатера.
     
     -1 - Завершить работу.
     '''
