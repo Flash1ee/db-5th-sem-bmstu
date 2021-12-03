@@ -4,7 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 import json
 
-from db.viewes import linq_to_object, linq_to_json
+from db.viewes import linq_to_object, linq_to_json, linq_to_sql
 
 cfg = json.load(open("../config.json"))
 DB_INFO = cfg['db']
@@ -28,6 +28,13 @@ def menu():
     6 - Получить все записи из таблицы с JSON.
     7 - Изменить поле user у json таблицы с заданным id.
     8 - Добавить новую строку в таблицу с json.
+    --------------------------------------
+    9 - Получить все записи таблицы Content в формате имя категории - описание.
+    10 - Получить сумму платежей донатеров.
+    11 - Добавить нового донатера.
+    12 - Обновить логин донатера.
+    13 - Удалить донатера из базы.
+    14 - Получить иерархию наград - процедура.
     -1 - Завершить работу.
     '''
     print(choices)
@@ -49,6 +56,13 @@ QUERIES = {
     6: "SELECT data from tb_json;",
     7: "UPDATE tb_json SET data = {} where id = {}",
     8: "INSERT INTO tb_json(data) VALUES ({});",
+    9: "SELECT description, category_name FROM content;",
+    10: "SELECT first_name, second_name, SUM(amount) as sum_payments FROM donators JOIN payments p on donators.id = p.donators_id " +
+        "group by first_name, second_name;",
+    11: "INSERT INTO donators(first_name, second_name, login) VALUES({});",
+    12: "UPDATE donators SET login = {} where id = {};",
+    13: "DELETE FROM donators WHERE id = {};",
+    14: "CALL reverse_counter(100);",
 }
 
 
@@ -68,14 +82,23 @@ def main():
             else:
                 if action in QUERIES:
                     session = Session()
-                    if action > 5:
+                    if action > 5 and action < 9:
                         for rows in linq_to_json()[QUERIES[action]](session):
                             for row in rows:
                                 print(row)
-                    else:
+                    elif action < 5:
                         for rows in linq_to_object(session)[QUERIES[action]]:
                             for row in rows:
                                 print(row)
+                    elif action >= 9:
+                        if action >= 11:
+                            for row in linq_to_sql(session)[QUERIES[action]]():
+                                print(row)
+
+                        else:
+                            for rows in linq_to_sql(session)[QUERIES[action]]:
+                                for row in rows:
+                                    print(row)
                     session.commit()
                 else:
                     print("Error input action")
