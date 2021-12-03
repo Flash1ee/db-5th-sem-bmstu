@@ -2,7 +2,7 @@ import time
 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
-from sqlalchemy import Column, Integer, ForeignKey, Text, Numeric, CheckConstraint, Date
+from sqlalchemy import Column, Integer, ForeignKey, Text, Numeric, CheckConstraint, Date, JSON
 from citext import CIText
 
 Base = declarative_base()
@@ -24,7 +24,6 @@ class Donators(Base):
     account = Column('account', Numeric, CheckConstraint("account >= 0"))
     sex = Column('sex', Text, CheckConstraint(f"sex in {SEX_CONSTRAINT}"))
     age = Column('age', Date)
-
 
 
 class Creators(Base):
@@ -65,3 +64,9 @@ class Payments(Base):
 
     donators = relationship("Donators")
     content = relationship("Content")
+
+
+class TbJson(Base):
+    __tablename__ = 'tb_json'
+    id = Column(Integer, primary_key=True)
+    data = Column('data', JSON)

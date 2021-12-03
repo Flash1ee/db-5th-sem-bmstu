@@ -150,6 +150,7 @@ from load_awards;
 drop table tb_json;
 create table tb_json
 (
+    id bigserial primary key not null unique,
     data jsonb
 );
 
@@ -229,6 +230,7 @@ with cte(data) as (
 )
 select *
 from cte;
+select current_date;
 
 select *
 from json_array_elements('[
@@ -262,3 +264,16 @@ values ('{
 select * from tb_json
 where (data->>'id')::int between 2 and 9;
 select * from tb_json;
+
+select * from pg_catalog.pg_tables
+where schemaname = 'public';
+
+select get_count_donators(6);
+
+drop table events;
+
+create table if not exists events(
+                id bigserial primary key,
+                event_name text not null,
+                creator_id int references creators(id) not null
+            );

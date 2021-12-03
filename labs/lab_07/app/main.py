@@ -4,7 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 import json
 
-from db.viewes import linq_to_object
+from db.viewes import linq_to_object, linq_to_json
 
 cfg = json.load(open("../config.json"))
 DB_INFO = cfg['db']
@@ -24,7 +24,10 @@ def menu():
     3 - Получить количество креаторов - мужчин.
     4 - Получить средний платеж донатера.
     5 - Получить 10 последних платежей.
-
+    -------------------------------------
+    6 - Получить все записи из таблицы с JSON.
+    7 - Изменить поле user у json таблицы с заданным id.
+    8 - Добавить новую строку в таблицу с json.
     -1 - Завершить работу.
     '''
     print(choices)
@@ -43,6 +46,9 @@ QUERIES = {
     5: "SELECT amount, date, d.login, c.category_name from payments "
        "join donators d on payments.donators_id = d.id "
        "join content c on payments.content_id = c.id order by date DESC limit 10;",
+    6: "SELECT data from tb_json;",
+    7: "UPDATE tb_json SET data = {} where id = {}",
+    8: "INSERT INTO tb_json(data) VALUES ({});",
 }
 
 
@@ -62,12 +68,18 @@ def main():
             else:
                 if action in QUERIES:
                     session = Session()
-                    for rows in linq_to_object(session)[QUERIES[action]]:
-                        for row in rows:
-                            print(row)
+                    if action > 5:
+                        for rows in linq_to_json()[QUERIES[action]](session):
+                            for row in rows:
+                                print(row)
+                    else:
+                        for rows in linq_to_object(session)[QUERIES[action]]:
+                            for row in rows:
+                                print(row)
                     session.commit()
                 else:
                     print("Error input action")
+
 
 if __name__ == "__main__":
     main()
