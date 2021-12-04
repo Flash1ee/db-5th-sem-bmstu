@@ -35,6 +35,7 @@ def menu():
     12 - Обновить логин донатера.
     13 - Удалить донатера из базы.
     14 - Получить иерархию наград - процедура.
+    15 - Защита
     -1 - Завершить работу.
     '''
     print(choices)
@@ -63,6 +64,7 @@ QUERIES = {
     12: "UPDATE donators SET login = {} where id = {};",
     13: "DELETE FROM donators WHERE id = {};",
     14: "CALL reverse_counter(100);",
+    15: "GUARDS",
 }
 
 

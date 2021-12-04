@@ -104,6 +104,11 @@ def linq_to_sql(session):
             print("error input data")
             return
 
+    def guard_task():
+            return session.execute("select login, payments.date " +
+                              "from donators join (select donators_id, amount, date " +
+                              "from payments join (select id, category_name from content where id in ( " +
+                              "select content_id from posts order by date limit 10)) content on content.id = payments.content_id) payments on payments.donators_id = donators.id order by payments.date;")
     def delete_donator():
         try:
             id = input("Input id: ")
@@ -164,4 +169,5 @@ def linq_to_sql(session):
         "UPDATE donators SET login = {} where id = {};": update_donator,
         "DELETE FROM donators WHERE id = {};": delete_donator,
         "SELECT * from get_rank_type_hierarhy();": call_proc,
+        "GUARDS": guard_task,
     }
