@@ -1,21 +1,24 @@
 import datetime
 from time import sleep
 import json
+import os
 
 from faker import Faker
 
 faker = Faker('ru')
 
+# constants
+N = 10
+SLEEP = 60
+# -------------------------------
 counter = 0
 date_mask = "%Y-%m-%d-%H.%M.%S"
 file_mask = "{}_{}_{}.json"
-
 dir = "./data/"
 
 
 def gen_filename(tablename):
     global counter
-    counter += 1
     name = file_mask.format(counter, tablename, datetime.datetime.now().strftime(date_mask))
     return name
 
@@ -43,11 +46,12 @@ def generate_donators(count):
 def main():
     global counter
     table = "donators"
-    n = 10
+    if not os.path.exists(dir):
+        os.makedirs(dir)
     while True:
         fname = gen_filename(table)
         with open(dir + fname, "w", encoding='utf-8') as file:
-            file.write(generate_donators(n))
+            file.write(generate_donators(N))
         counter += 1
         sleep(60)
 
