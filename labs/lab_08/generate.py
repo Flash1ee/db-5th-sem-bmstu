@@ -30,7 +30,6 @@ def generate_donators(count):
         fio = user['name'].split()
         age = faker.date()
         donator = {
-            "id": i + 1,
             "first_name": fio[1],
             "second_name": fio[0],
             "login": user["username"],
@@ -53,7 +52,7 @@ def main():
         with open(dir + fname, "w", encoding='utf-8') as file:
             file.write(generate_donators(N))
         counter += 1
-        sleep(60)
+        sleep(5)
 
 
 if __name__ == "__main__":
