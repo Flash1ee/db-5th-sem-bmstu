@@ -66,7 +66,7 @@ CREATE TABLE posts
     id              BIGSERIAL NOT NULL PRIMARY KEY,
     title           TEXT,
     body            TEXT,
-    date            timestamptz,
+    date            timestamptz default now() at time zone 'utc',
     age_restriction INTEGER,
     content_id      INTEGER   NOT NULL REFERENCES content (id) ON DELETE CASCADE,
     awards_id       INTEGER   NOT NULL REFERENCES awards (id) ON DELETE CASCADE,

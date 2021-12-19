@@ -269,7 +269,7 @@ from donators as d
          join payments p on d.id = p.donators_id
 order by sum_donats;
 
--- 25. Оконные фнкции для устранения дублей
+-- 25. Оконные функции для устранения дублей
 with cte(id, first_name, second_name) as (
     select id, first_name, second_name
     from donators
