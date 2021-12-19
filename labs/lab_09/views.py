@@ -1,4 +1,8 @@
+import datetime
+
 import db_connection, random
+
+CACHE_KEY = "cache"
 
 QUERY_COUNT_CONTENT = "SELECT reltuples::bigint AS estimate FROM pg_class WHERE oid = 'content'::regclass;"
 
@@ -17,8 +21,14 @@ QUERY_DELETE_LAST_POST = "delete from posts where id = (select id from posts ord
 QUERY_ADD_POST = "insert into posts(title, body, age_restriction, content_id, awards_id) values ('{}', '{}', {}, {}, {}) returning id;"
 QUERY_CHANGE_POST = "update posts set body = 'change data' where id = {};"
 
-def get_top_categories(connection):
+
+def get_top_categories(connection, r):
     data = "Top Categories: "
+    redis_cache = r.get(CACHE_KEY)
+    if redis_cache is not None:
+        print("DATA FROM CACHE")
+        return redis_cache.decode("utf-8")
+
     cursor = db_connection.execute_query(connection, QUERY_TOP_CATEGORY)
     if cursor is not None:
         res = cursor.fetchall()
@@ -26,15 +36,20 @@ def get_top_categories(connection):
             data += category[0] + ", "
         data = data.rstrip(", ")
 
+    r.set(CACHE_KEY, data)
+
     return data
 
-def delete_last_post(connection):
+
+def delete_last_post(connection, r):
     data = "Success deleted post with id = {}"
     res = db_connection.execute_query(connection, QUERY_DELETE_LAST_POST)
+    r.expire(CACHE_KEY, datetime.timedelta(seconds=0))
 
-    return data.format(res)
+    return data.format(res.fetchall()[0][0])
 
-def add_post(connection):
+
+def add_post(connection, r):
     data = "Success add post - id = {}"
     res_content = db_connection.execute_query(connection, QUERY_COUNT_CONTENT).fetchall()
     content_id = random.randint(0, res_content[0][0])
@@ -45,9 +60,12 @@ def add_post(connection):
     query = QUERY_ADD_POST.format("test post", "lab_09 testing", 18, content_id, awards_id)
     res = db_connection.execute_query(connection, query)
 
-    return data.format(res)
+    r.expire(CACHE_KEY, datetime.timedelta(seconds=0))
 
-def change_post(connection):
+    return data.format(res.fetchall()[0][0])
+
+
+def change_post(connection, r):
     data = "Success change post with id = {}"
     posts_ids = []
     posts = db_connection.execute_query(connection, QUERY_GET_ID_TEST_POSTS).fetchall()
@@ -55,7 +73,8 @@ def change_post(connection):
         posts_ids.append(row[0])
     id = random.randint(0, len(posts_ids) - 1)
 
-
     res = db_connection.execute_query(connection, QUERY_CHANGE_POST.format(posts_ids[id]))
+
+    r.expire(CACHE_KEY, datetime.timedelta(seconds=0))
 
     return data.format(posts_ids[id])

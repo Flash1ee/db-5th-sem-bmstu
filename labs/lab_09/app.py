@@ -11,6 +11,7 @@ DB_INFO = cfg['db']
 engine = create_engine(
     f'postgresql://{DB_INFO["user"]}:{DB_INFO["password"]}@{DB_INFO["host"]}:{DB_INFO["port"]}/{DB_INFO["name"]}',
     pool_pre_ping=True)
+
 r = redis.Redis()
 
 Session = sessionmaker(bind=engine)
@@ -55,7 +56,7 @@ def main():
             else:
                 if action in QUERIES:
                     session = Session()
-                    res = QUERIES[action](connection)
+                    res = QUERIES[action](connection, r)
                     print(res)
                     session.commit()
                 else:
