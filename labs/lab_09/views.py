@@ -17,17 +17,30 @@ QUERY_TOP_CATEGORY = "select category_name, count(*) as cnt from content " \
                      "group by category_name " \
                      "order by cnt desc;"
 
-QUERY_DELETE_LAST_POST = "delete from posts where id = (select id from posts order by date desc limit 1) returning id;"
+QUERY_DELETE_LAST_POST = "delete from posts where id = (select id from posts where title = 'test post' order by date desc limit 1) returning id;"
 QUERY_ADD_POST = "insert into posts(title, body, age_restriction, content_id, awards_id) values ('{}', '{}', {}, {}, {}) returning id;"
 QUERY_CHANGE_POST = "update posts set body = 'change data' where id = {};"
 
 
 def get_top_categories(connection, r):
     data = "Top Categories: "
+    cursor = db_connection.execute_query(connection, QUERY_TOP_CATEGORY)
+    if cursor is not None:
+        res = cursor.fetchall()
+        for category in res:
+            data += category[0] + ", "
+        data = data.rstrip(", ")
+
+    return data
+
+def get_top_categories_cache(connection, r):
+    data = "Top Categories: "
     redis_cache = r.get(CACHE_KEY)
     if redis_cache is not None:
         print("DATA FROM CACHE")
         return redis_cache.decode("utf-8")
+    else:
+        return "NO DATA IN CACHE"
 
     cursor = db_connection.execute_query(connection, QUERY_TOP_CATEGORY)
     if cursor is not None:
@@ -44,9 +57,12 @@ def get_top_categories(connection, r):
 def delete_last_post(connection, r):
     data = "Success deleted post with id = {}"
     res = db_connection.execute_query(connection, QUERY_DELETE_LAST_POST)
+    res = res.fetchall()
+    if len(res) == 0:
+        return "NO TEST POSTS"
     r.expire(CACHE_KEY, datetime.timedelta(seconds=0))
 
-    return data.format(res.fetchall()[0][0])
+    return data.format(res[0][0])
 
 
 def add_post(connection, r):
