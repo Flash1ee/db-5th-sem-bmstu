@@ -19,16 +19,20 @@ create table employers
     departament text   not null
 );
 
+
+
 create or replace function get_number_of_employers()
     RETURNS bigint as
 $$
 BEGIN
     return (select *
             from employers
-            where current_time - birthday BETWEEN (18, 40)
-                      and (select count(*) from employer_time group by id) > 3
+            where extract(year from now()) - extract(year from birthday) BETWEEN (18, 40)
+                      and id in (
+                          select id from employer_time
+                          group by id, type
+                          having count(*) > 3)
     );
 end;
 $$ language plpgsql;
-
 

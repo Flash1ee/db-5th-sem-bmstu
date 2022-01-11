@@ -71,7 +71,7 @@ def main():
         print(f"[INFO] database {DB_INFO['name']} exist")
         connection = connect()
         connection.autocommit = True
-        # with open('query.sql', 'r') as f:
+        # with open('query.sql.sql', 'r') as f:
         #     cursor = connection.cursor()
         #     cursor.execute("\n".join(f.readlines()))
         #     print(f"[INFO] database {DB_INFO['name']} successfully filling")

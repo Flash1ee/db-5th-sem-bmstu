@@ -28,3 +28,15 @@ class EmployerTime(Base):
     days = Column(Text, CheckConstraint(f"days in {DAYS_CONSTRAINT}"), nullable=False)
     action_time = Column("time", Time, default=time.time())
     action_type = Column("type", Integer, CheckConstraint("type = 1 or type = 2"))
+
+create or replace function get_number_of_employers()
+    RETURNS bigint as
+$$
+BEGIN
+    return (select *
+            from employers
+            where current_time - birthday BETWEEN (18, 40)
+                      and (select count(*) from employer_time group by id) > 3
+    );
+end;
+$$ language plpgsql;

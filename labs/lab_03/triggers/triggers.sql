@@ -73,3 +73,8 @@ DROP VIEW payments_view;
 DROP FUNCTION insert_payment();
 DROP TRIGGER check_correct_payment ON payments_view
 
+explain select  * from payments join content c on c.id = payments.content_id;
+
+create index on payments(donators_id);
+drop index payments_donators_id_idx;
+explain select * from payments where donators_id < 6;
